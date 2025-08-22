@@ -189,9 +189,14 @@ class BashSession:
         self.username = username
         self._initialized = False
         self.max_memory_mb = max_memory_mb
+        self._closed = False
 
     def initialize(self) -> None:
-        self.server = libtmux.Server()
+        import getpass
+        socket_dir = f'/tmp/{getpass.getuser()}'
+        os.makedirs(socket_dir, exist_ok=True)
+        socket_path = f'{socket_dir}/.tmux'
+        self.server = libtmux.Server(socket_path=socket_path)
         _shell_command = '/bin/bash'
         if self.username in ['root', 'openhands']:
             # This starts a non-login (new) shell for the given user
@@ -230,6 +235,10 @@ class BashSession:
         self.pane = self.window.active_pane
         logger.debug(f'pane: {self.pane}; history_limit: {self.session.history_limit}')
         _initial_window.kill()
+
+        # Wait for the pane to be created
+        while not self._get_pane_content():
+            time.sleep(0.1)
 
         # Configure bash to use simple PS1 and disable PS2
         self.pane.send_keys(
