@@ -898,9 +898,12 @@ def convert_non_fncall_messages_to_fncall_messages(
                         f'Unexpected content type {type(content)}. Expected str or list. Content: {content}'
                     )
 
-                converted_messages.append(
-                    {'role': 'assistant', 'content': content, 'tool_calls': [tool_call]}
-                )
+                # Preserve reasoning_content for thinking models (GLM-4.7, DeepSeek, etc.)
+                reasoning_content = message.get('reasoning_content') if isinstance(message, dict) else getattr(message, 'reasoning_content', None)
+                new_message = {'role': 'assistant', 'content': content, 'tool_calls': [tool_call]}
+                if reasoning_content is not None:
+                    new_message['reasoning_content'] = reasoning_content
+                converted_messages.append(new_message)
             else:
                 # No function call, keep message as is
                 converted_messages.append(message)
