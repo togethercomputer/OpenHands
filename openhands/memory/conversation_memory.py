@@ -240,6 +240,9 @@ class ConversationMemory:
             llm_response: ModelResponse = tool_metadata.model_response
             assistant_msg = getattr(llm_response.choices[0], 'message')
 
+            # Extract reasoning_content for thinking models (GLM-4.7, DeepSeek, etc.)
+            reasoning_content = getattr(assistant_msg, 'reasoning_content', None)
+
             # Add the LLM message (assistant) that initiated the tool calls
             # (overwrites any previous message with the same response_id)
             pending_tool_call_action_messages[llm_response.id] = Message(
@@ -249,6 +252,7 @@ class ConversationMemory:
                 if assistant_msg.content and assistant_msg.content.strip()
                 else [],
                 tool_calls=assistant_msg.tool_calls,
+                reasoning_content=reasoning_content,
             )
             return []
         elif isinstance(action, AgentFinishAction):
@@ -258,12 +262,16 @@ class ConversationMemory:
             # which has already been executed, and it doesn't have a response
             # when the user finishes (/exit), we don't have tool_metadata
             tool_metadata = action.tool_call_metadata
+            reasoning_content = None
             if tool_metadata is not None:
                 # take the response message from the tool call
                 assistant_msg = getattr(
                     tool_metadata.model_response.choices[0], 'message'
                 )
                 content = assistant_msg.content or ''
+
+                # Extract reasoning_content for thinking models (GLM-4.7, DeepSeek, etc.)
+                reasoning_content = getattr(assistant_msg, 'reasoning_content', None)
 
                 # save content if any, to thought
                 if action.thought:
@@ -280,6 +288,7 @@ class ConversationMemory:
                 Message(
                     role=role,  # type: ignore[arg-type]
                     content=[TextContent(text=action.thought)],
+                    reasoning_content=reasoning_content,
                 )
             ]
         elif isinstance(action, MessageAction):
@@ -294,10 +303,13 @@ class ConversationMemory:
                     content.append(ImageContent(image_urls=action.image_urls))
             if role not in ('user', 'system', 'assistant', 'tool'):
                 raise ValueError(f'Invalid role: {role}')
+            # Get reasoning_content if available (for thinking models)
+            reasoning_content = getattr(action, 'reasoning_content', None)
             return [
                 Message(
                     role=role,  # type: ignore[arg-type]
                     content=content,
+                    reasoning_content=reasoning_content,
                 )
             ]
         elif isinstance(action, CmdRunAction) and action.source == 'user':

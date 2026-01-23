@@ -14,6 +14,8 @@ class MessageAction(Action):
     wait_for_response: bool = False
     action: str = ActionType.MESSAGE
     security_risk: ActionSecurityRisk | None = None
+    # reasoning/thinking content for models like GLM-4.7, DeepSeek with thinking mode
+    reasoning_content: str | None = None
 
     @property
     def message(self) -> str:

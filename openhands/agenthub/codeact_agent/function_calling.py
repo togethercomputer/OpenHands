@@ -246,10 +246,13 @@ def response_to_actions(
             )
             actions.append(action)
     else:
+        # Extract reasoning_content for thinking models (GLM-4.7, DeepSeek, etc.)
+        reasoning_content = getattr(assistant_msg, 'reasoning_content', None)
         actions.append(
             MessageAction(
                 content=str(assistant_msg.content) if assistant_msg.content else '',
                 wait_for_response=True,
+                reasoning_content=reasoning_content,
             )
         )
 

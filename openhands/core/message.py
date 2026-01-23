@@ -66,6 +66,8 @@ class Message(BaseModel):
     name: str | None = None  # name of the tool
     # force string serializer
     force_string_serializer: bool = False
+    # reasoning/thinking content (for models like GLM-4.7, DeepSeek with thinking mode)
+    reasoning_content: str | None = None
 
     @property
     def contains_image(self) -> bool:
@@ -154,5 +156,9 @@ class Message(BaseModel):
             )
             message_dict['tool_call_id'] = self.tool_call_id
             message_dict['name'] = self.name
+
+        # Add reasoning_content for thinking models (GLM-4.7, DeepSeek, etc.)
+        if self.reasoning_content is not None:
+            message_dict['reasoning_content'] = self.reasoning_content
 
         return message_dict
