@@ -36,7 +36,6 @@ from openhands.memory.condenser.condenser import Condensation, View
 from openhands.memory.conversation_memory import ConversationMemory
 from openhands.runtime.plugins import (
     AgentSkillsRequirement,
-    JupyterRequirement,
     PluginRequirement,
 )
 from openhands.utils.prompt import PromptManager
@@ -64,11 +63,7 @@ class CodeActAgent(Agent):
     """
 
     sandbox_plugins: list[PluginRequirement] = [
-        # NOTE: AgentSkillsRequirement need to go before JupyterRequirement, since
-        # AgentSkillsRequirement provides a lot of Python functions,
-        # and it needs to be initialized before Jupyter for Jupyter to use those functions.
         AgentSkillsRequirement(),
-        JupyterRequirement(),
     ]
 
     def __init__(
