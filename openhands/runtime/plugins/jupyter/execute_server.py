@@ -121,7 +121,9 @@ class JupyterKernel:
         ws_req = HTTPRequest(
             url='{}/api/kernels/{}/channels'.format(
                 self.base_ws_url, url_escape(self.kernel_id)
-            )
+            ),
+            connect_timeout=480,  # Increase timeout for high concurrency
+            request_timeout=120,
         )
         self.ws = await websocket_connect(ws_req)
         logging.info('Connected to kernel websocket')
