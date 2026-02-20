@@ -113,8 +113,6 @@ class CodeActAgent(Agent):
         tools = []
         if self.config.enable_cmd:
             tools.append(create_cmd_run_tool(use_short_description=use_short_tool_desc))
-        if self.config.enable_think:
-            tools.append(ThinkTool)
         if self.config.enable_finish:
             tools.append(FinishTool)
         if self.config.enable_condensation_request:
@@ -134,6 +132,8 @@ class CodeActAgent(Agent):
                     use_short_description=use_short_tool_desc
                 )
             )
+        if self.config.enable_think:
+            tools.append(ThinkTool)
         return tools
 
     def reset(self) -> None:
@@ -189,10 +189,33 @@ class CodeActAgent(Agent):
         }
         params['tools'] = check_tools(self.tools, self.llm.config)
         params['extra_body'] = {'metadata': state.to_llm_metadata(agent_name=self.name)}
+
         response = self.llm.completion(**params)
-        logger.debug(f'Response from LLM: {response}')
         actions = self.response_to_actions(response)
-        logger.debug(f'Actions after response_to_actions: {actions}')
+
+        # Retry if the model returns text-only (no tool calls).  With
+        # temperature > 0 a subsequent attempt usually produces a tool call.
+        # If the retry itself raises (e.g., context window exhausted after
+        # condensation), stop immediately — the LLM is at its limit and
+        # further retries would just compound with tenacity's internal retries.
+        has_tool_call = any(not isinstance(a, MessageAction) for a in actions)
+        if not has_tool_call:
+            for _attempt in range(3):
+                logger.warning(
+                    f'LLM returned text-only response (no tool calls), retrying ({_attempt + 1}/3)'
+                )
+                try:
+                    response = self.llm.completion(**params)
+                    actions = self.response_to_actions(response)
+                    has_tool_call = any(
+                        not isinstance(a, MessageAction) for a in actions
+                    )
+                    if has_tool_call:
+                        break
+                except Exception:
+                    logger.warning('LLM error during no-tool-call retry, stopping retries')
+                    break
+
         for action in actions:
             self.pending_actions.append(action)
         return self.pending_actions.popleft()

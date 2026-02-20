@@ -18,6 +18,7 @@ from litellm import ModelInfo, PromptTokensDetails
 from litellm import completion as litellm_completion
 from litellm import completion_cost as litellm_completion_cost
 from litellm.exceptions import (
+    BadGatewayError,
     RateLimitError,
     ServiceUnavailableError,
 )
@@ -42,6 +43,7 @@ __all__ = ['LLM']
 LLM_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
     RateLimitError,
     ServiceUnavailableError,
+    BadGatewayError,
     litellm.Timeout,
     litellm.InternalServerError,
     LLMNoResponseError,
