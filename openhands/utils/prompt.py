@@ -87,10 +87,16 @@ class PromptManager:
         if not os.path.exists(template_path):
             raise FileNotFoundError(f'Prompt file {template_path} not found')
         with open(template_path, 'r') as file:
-            return Template(file.read())
+            # Use keep_trailing_newline=True so that prompt files render
+            # byte-identically to reading them with f.read().  Without this,
+            # Jinja2 strips the trailing newline from the template, which
+            # changes the token sequence the model sees.
+            from jinja2 import Environment
+            env = Environment(keep_trailing_newline=True)
+            return env.from_string(file.read())
 
     def get_system_message(self) -> str:
-        return self.system_template.render().strip()
+        return self.system_template.render()
 
     def get_example_user_message(self) -> str:
         """This is an initial user message that can be provided to the agent

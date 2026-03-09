@@ -838,6 +838,7 @@ class AgentController:
                     'contextwindowexceedederror' in error_str
                     or 'prompt is too long' in error_str
                     or 'input length and `max_tokens` exceed context limit' in error_str
+                    or "is longer than the model's context length" in error_str
                     or 'please reduce the length of either one'
                     in error_str  # For OpenRouter context window errors
                     or (
@@ -848,6 +849,15 @@ class AgentController:
                     or isinstance(e, ContextWindowExceededError)
                 ):
                     if self.agent.config.enable_history_truncation:
+                        # If the condenser is NoOp, condensation won't reduce
+                        # the context — requesting it just creates an infinite
+                        # loop (same error every time, stuck detector fires
+                        # after 10 events × 5 retries = 50 wasted LLM calls).
+                        from openhands.memory.condenser.impl.no_op_condenser import (
+                            NoOpCondenser,
+                        )
+                        if isinstance(self.agent.condenser, NoOpCondenser):
+                            raise LLMContextWindowExceedError()
                         self.event_stream.add_event(
                             CondensationRequestAction(), EventSource.AGENT
                         )
@@ -976,6 +986,15 @@ class AgentController:
         Returns:
             bool: True if the agent is stuck, False otherwise.
         """
+        # Allow disabling stuck detection via environment variable.
+        # R2E-Gym has no loop detection; disabling it recovers ~14 tasks
+        # on SWE-bench Verified that are killed early but would eventually
+        # solve with more iterations.
+        if os.environ.get('DISABLE_STUCK_DETECTION', '').lower() in (
+            'true', '1', 'yes',
+        ):
+            return False
+
         # check if delegate stuck
         if self.delegate and self.delegate._is_stuck():
             return True
