@@ -59,6 +59,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,6 +78,12 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+      - name: Set up Chalk
+        uses: crashappsec/setup-chalk-action@main
+        continue-on-error: true
+        with:
+          connect: true
+          profile: everything
       - name: Lowercase Repository Owner
         run: |
           echo REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
@@ -93,6 +100,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     needs: define-matrix
     strategy:
       matrix:
@@ -115,6 +123,12 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+      - name: Set up Chalk
+        uses: crashappsec/setup-chalk-action@main
+        continue-on-error: true
+        with:
+          connect: true
+          profile: everything
       - name: Install poetry via pipx
         run: pipx install poetry
       - name: Set up Python
