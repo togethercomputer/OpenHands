@@ -62,7 +62,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up QEMU
@@ -107,7 +107,7 @@ jobs:
         base_image: ${{ fromJson(needs.define-matrix.outputs.base_image) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up QEMU
@@ -190,7 +190,7 @@ jobs:
       matrix:
         base_image: ${{ fromJson(needs.define-matrix.outputs.base_image) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
@@ -252,7 +252,7 @@ jobs:
       matrix:
         base_image: ${{ fromJson(needs.define-matrix.outputs.base_image) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
@@ -332,7 +332,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2204
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get short SHA
         id: short_sha
