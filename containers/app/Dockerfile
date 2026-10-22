@@ -1,5 +1,5 @@
 ARG OPENHANDS_BUILD_VERSION=dev
-FROM node:24.22.1-bookworm-slim AS frontend-builder
+FROM node:24.22.1-alpine3.23 AS frontend-builder
 
 WORKDIR /app
 
@@ -9,7 +9,10 @@ RUN npm ci
 COPY frontend ./
 RUN npm run build
 
-FROM python:3.12.10-slim AS base
+# Wolfi (glibc) base: Debian has no fix for util-linux CVE-2026-76642, and Alpine
+# (musl) cannot be used because playwright only ships manylinux wheels.
+FROM cgr.dev/chainguard/wolfi-base:latest AS base
+RUN apk add --no-cache python-3.12 py3.12-pip ca-certificates bash libstdc++
 FROM base AS backend-builder
 
 WORKDIR /app
@@ -20,8 +23,7 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
-RUN apt-get update -y \
-    && apt-get install -y curl make git build-essential \
+RUN apk add --no-cache curl make git build-base python-3.12-base-dev \
     && python3 -m pip install poetry --break-system-packages
 
 COPY pyproject.toml poetry.lock ./
@@ -49,22 +51,20 @@ ENV INIT_GIT_IN_EMPTY_WORKSPACE=1
 RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
-RUN apt-get update -y \
-    && apt-get install -y curl ssh sudo \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl openssh-client sudo shadow shadow-login posix-libc-utils coreutils findutils
 
 # Default is 1000, but OSX is often 501
 RUN sed -i 's/^UID_MIN.*/UID_MIN 499/' /etc/login.defs
 # Default is 60000, but we've seen up to 200000
 RUN sed -i 's/^UID_MAX.*/UID_MAX 1000000/' /etc/login.defs
 
-RUN groupadd app
+RUN groupadd app && groupadd -f sudo
 RUN useradd -l -m -u $OPENHANDS_USER_ID -s /bin/bash openhands && \
     usermod -aG app openhands && \
     usermod -aG sudo openhands && \
     echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN chown -R openhands:app /app && chmod -R 770 /app
-RUN sudo chown -R openhands:app $WORKSPACE_BASE && sudo chmod -R 770 $WORKSPACE_BASE
+RUN chown -R openhands:app $WORKSPACE_BASE && chmod -R 770 $WORKSPACE_BASE
 USER openhands
 
 ENV VIRTUAL_ENV=/app/.venv \
