@@ -12,7 +12,7 @@ RUN npm run build
 # Wolfi (glibc) base: Debian has no fix for util-linux CVE-2026-76642, and Alpine
 # (musl) cannot be used because playwright only ships manylinux wheels.
 FROM cgr.dev/chainguard/wolfi-base:latest AS base
-RUN apk add --no-cache python-3.12 py3.12-pip ca-certificates bash libstdc++
+RUN apk add --no-cache python-3.12 python3-as-3.12 python-as-3.12 py3.12-pip ca-certificates bash libstdc++
 FROM base AS backend-builder
 
 WORKDIR /app
@@ -51,7 +51,10 @@ ENV INIT_GIT_IN_EMPTY_WORKSPACE=1
 RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
-RUN apk add --no-cache curl openssh-client sudo shadow shadow-login posix-libc-utils coreutils findutils
+# docker-cli/buildx: the runtime builder needs them to build sandbox images from inside
+# this container (its apt-get fallback in openhands/runtime/builder/docker.py is Debian-only).
+RUN apk add --no-cache curl openssh-client sudo shadow shadow-login posix-libc-utils coreutils findutils \
+    docker-cli docker-cli-buildx
 
 # Default is 1000, but OSX is often 501
 RUN sed -i 's/^UID_MIN.*/UID_MIN 499/' /etc/login.defs
