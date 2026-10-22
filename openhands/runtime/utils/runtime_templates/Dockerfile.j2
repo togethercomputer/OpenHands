@@ -1,5 +1,25 @@
 FROM {{ base_image }}
 
+# Upgrade the OS CA trust store from the distro security repo (CVE-2026-111943)
+# and fail the build if a fixed ca-certificates is available but not installed.
+USER root
+RUN if command -v apt-get >/dev/null 2>&1; then \
+        apt-get update && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade ca-certificates && \
+        rm -rf /var/lib/apt/lists/* && \
+        . /etc/os-release && \
+        v="$(dpkg-query -W -f='${Version}' ca-certificates 2>/dev/null || true)" && \
+        case "${ID}:${VERSION_ID}" in \
+            ubuntu:22.04|ubuntu:24.04) min="20260816~" ;; \
+            debian:12) min="20250419~deb12u2" ;; \
+            debian:13) min="20250419+deb13u1" ;; \
+            *) min="" ;; \
+        esac && \
+        if [ -n "$min" ] && ! dpkg --compare-versions "$v" ge "$min"; then \
+            echo "ca-certificates $v is older than $min" >&2; exit 1; \
+        fi; \
+    fi
+
 # Shared environment variables
 ENV POETRY_VIRTUALENVS_PATH=/openhands/poetry \
     MAMBA_ROOT_PREFIX=/openhands/micromamba \

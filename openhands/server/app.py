@@ -30,7 +30,7 @@ from openhands.server.routes.settings import app as settings_router
 from openhands.server.routes.trajectory import app as trajectory_router
 from openhands.server.shared import conversation_manager
 
-mcp_app = mcp_server.http_app(path='/mcp')
+mcp_app = mcp_server.http_app(path='/mcp', stateless_http=True)
 
 
 def combine_lifespans(*lifespans):

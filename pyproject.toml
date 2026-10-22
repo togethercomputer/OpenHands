@@ -33,7 +33,7 @@ google-auth-httplib2 = "*"                         # For Google Sheets authentic
 google-auth-oauthlib = "*"                         # For Google Sheets OAuth
 termcolor = "*"
 docker = "*"
-fastapi = "*"
+fastapi = ">=0.128.0"
 toml = "*"
 types-toml = "*"
 uvicorn = "*"
@@ -68,9 +68,9 @@ psutil = "*"
 python-json-logger = "^3.2.1"
 prompt-toolkit = "^3.0.50"
 poetry = "^2.1.2"
-anyio = "4.9.0"
+anyio = "^4.14.2"
 pythonnet = "*"
-fastmcp = "^2.5.2"
+fastmcp = "^3.2.0"
 python-frontmatter = "^1.1.0"
 shellingham = "^1.5.4"
 # TODO: Should these go into the runtime group?
@@ -85,7 +85,7 @@ bashlex = "^0.18"
 # TODO: These are integrations that should probably be optional
 redis = ">=5.2,<7.0"
 
-google-cloud-aiplatform = "*"
+google-cloud-aiplatform = ">=1.133.0,<2.0.0"
 anthropic = { extras = [ "vertex" ], version = "*" }
 boto3 = "*"
 kubernetes = "^33.1.0"
@@ -145,20 +145,21 @@ retry = "*"
 evaluate = "*"
 visualswebench = { git = "https://github.com/luolin101/Visual-SWE-bench.git" }
 swegym = { git = "https://github.com/SWE-Gym/SWE-Bench-Package.git" }
-commit0 = "*"
+# commit0 is not listed here: every release pins datasets==3.0.1, which caps fsspec at a
+# vulnerable version. Install it manually to run the commit0 benchmark.
 func_timeout = "*"
 sympy = "*"
-gdown = "*"
+gdown = "^5.2.2"
 matplotlib = "*"
 seaborn = "*"
 tabulate = "*"
-browsergym = "0.13.3"
-browsergym-webarena = "0.13.3"
+# browsergym-webarena / browsergym-visualwebarena (and the browsergym meta-package) are not
+# listed here: libwebarena/libvisualwebarena pin beartype==0.12.0, which conflicts with the
+# patched fastmcp (>=3.2.0, needs beartype>=0.20). Install them manually to run those benchmarks.
 browsergym-miniwob = "0.13.3"
-browsergym-visualwebarena = "0.13.3"
 boto3-stubs = { extras = [ "s3" ], version = "^1.37.19" }
 # transitive dependency, pinned here to avoid conflicts
-pyarrow = "21.0.0"
+pyarrow = "23.0.1"
 datasets = "*"
 joblib = "*"
 swebench = { git = "https://github.com/ryanhoangt/SWE-bench.git", rev = "fix-modal-patch-eval" }

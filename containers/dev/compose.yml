@@ -12,7 +12,9 @@ services:
       - SANDBOX_API_HOSTNAME=host.docker.internal
       - DOCKER_HOST_ADDR=host.docker.internal
       #
-      - SANDBOX_RUNTIME_CONTAINER_IMAGE=${SANDBOX_RUNTIME_CONTAINER_IMAGE:-ghcr.io/all-hands-ai/runtime:0.51-nikolaik}
+      # Unset by default: the runtime is built locally from the base image, which
+      # upgrades ca-certificates (CVE-2026-111943). Set it on the host to override.
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE
       - SANDBOX_USER_ID=${SANDBOX_USER_ID:-1234}
       - WORKSPACE_MOUNT_PATH=${WORKSPACE_BASE:-$PWD/workspace}
     ports:

@@ -38,7 +38,8 @@ def test_setup_sandbox_config_default():
 
         assert_sandbox_config(
             openhands_config.sandbox,
-            runtime_container_image='ghcr.io/all-hands-ai/runtime:mock-nikolaik',
+            base_container_image='nikolaik/python-nodejs:python3.12-nodejs22',
+            runtime_container_image=None,
         )
 
 
