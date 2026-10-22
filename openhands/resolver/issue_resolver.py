@@ -13,7 +13,6 @@ from uuid import uuid4
 
 from termcolor import colored
 
-import openhands
 from openhands.controller.state.state import State
 from openhands.core.config import AgentConfig, OpenHandsConfig, SandboxConfig
 from openhands.core.config.utils import load_openhands_config
@@ -221,9 +220,9 @@ class IssueResolver:
             and base_container_image is None
             and not is_experimental
         ):
-            runtime_container_image = (
-                f'ghcr.io/all-hands-ai/runtime:{openhands.__version__}-nikolaik'
-            )
+            # Build the runtime locally so it gets the CA trust store upgrade
+            # from the runtime Dockerfile template.
+            base_container_image = 'nikolaik/python-nodejs:python3.12-nodejs22'
 
         # Convert container image values to string or None
         container_base = (
