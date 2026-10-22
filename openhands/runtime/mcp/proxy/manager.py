@@ -11,6 +11,7 @@ from typing import Any, Optional
 from anyio import get_cancelled_exc_class
 from fastapi import FastAPI
 from fastmcp import FastMCP
+from fastmcp.server import create_proxy
 from fastmcp.utilities.logging import get_logger as fastmcp_get_logger
 
 from openhands.core.config.mcp_config import MCPStdioServerConfig
@@ -65,11 +66,7 @@ class MCPProxyManager:
             return None
 
         # Create a new proxy with the current configuration
-        self.proxy = FastMCP.as_proxy(
-            self.config,
-            auth_enabled=self.auth_enabled,
-            api_key=self.api_key,
-        )
+        self.proxy = create_proxy(self.config)
 
         logger.info('FastMCP Proxy initialized successfully')
 
